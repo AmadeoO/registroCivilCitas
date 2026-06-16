@@ -1,0 +1,35 @@
+name: Verificador de Citas - Registro Civil Málaga
+
+on:
+  schedule:
+    # Horarios en UTC (España es UTC+2 en verano)
+    - cron: '0 2 * * *'   # 04:00 España
+    - cron: '0 6 * * *'   # 08:00 España
+    - cron: '0 14 * * *'  # 16:00 España
+    - cron: '0 18 * * *'  # 20:00 España
+  workflow_dispatch:       # Permite ejecutarlo manualmente desde GitHub
+
+jobs:
+  check-citas:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias Python
+        run: pip install selenium requests
+
+      - name: Instalar Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Ejecutar verificador de citas
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/check_citas.py

@@ -1,0 +1,7 @@
+logs/
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+/tmp/citas_screenshot.png
+scripts/config.py
