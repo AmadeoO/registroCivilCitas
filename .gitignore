@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 /tmp/citas_screenshot.png
 scripts/config.py
+.claude/
