@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import logging
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # Configuración de logging
 _log_handlers = [logging.StreamHandler()]
@@ -150,10 +151,10 @@ def check_availability():
         all_slots = disponible_elements + disponible_text
         now = datetime.now().strftime('%d/%m/%Y %H:%M')
 
-        # Calcular próxima ejecución
-        horas_cron = [4, 8, 16, 20]
-        ahora = datetime.now()
-        proxima = next((h for h in horas_cron if h > ahora.hour), horas_cron[0])
+        # Calcular próxima ejecución (hora España, maneja DST automáticamente)
+        horas_cron = [9, 16, 21]
+        ahora_spain = datetime.now(ZoneInfo("Europe/Madrid"))
+        proxima = next((h for h in horas_cron if h > ahora_spain.hour), horas_cron[0])
         proxima_str = f"{proxima:02d}:00"
 
         if all_slots and not no_disponible:
