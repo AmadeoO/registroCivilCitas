@@ -17,13 +17,16 @@ import logging
 from datetime import datetime
 
 # Configuración de logging
+_log_handlers = [logging.StreamHandler()]
+if not os.environ.get("GITHUB_ACTIONS"):
+    _log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
+    os.makedirs(_log_dir, exist_ok=True)
+    _log_handlers.append(logging.FileHandler(os.path.join(_log_dir, "citas_check.log")))
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('/Users/amadeo.garcia/Documents/Amadeo/projects/registro civil - citas/logs/citas_check.log'),
-        logging.StreamHandler()
-    ]
+    handlers=_log_handlers
 )
 logger = logging.getLogger(__name__)
 
