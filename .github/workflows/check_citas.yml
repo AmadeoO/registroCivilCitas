@@ -2,32 +2,68 @@ name: Verificador de Citas - Registro Civil Málaga
 
 on:
   schedule:
-    # Horarios en UTC (España verano = UTC+2)
-    - cron: '0 7 * * *'   # 09:00 España
-    - cron: '0 14 * * *'  # 16:00 España
-    - cron: '0 19 * * *'  # 21:00 España
-  workflow_dispatch:       # Permite ejecutarlo manualmente desde GitHub
+    # ──────────────────────────────────────────────────────────────
+    # Horarios programados lunes-viernes en hora ESPAÑA
+    # España usa CET (UTC+1) en invierno y CEST (UTC+2) en verano.
+    # Se añaden ambos offsets para que funcione todo el año.
+    # Un paso posterior comprueba la hora real y evita duplicados.
+    # ──────────────────────────────────────────────────────────────
+
+    # 00:00 hora España (lun-vie)
+    # lun-vie España = dom-jue UTC cuando la medianoche cae en UTC anterior
+    - cron: '0 22 * * 0-4'  # dom-jue 22:00 UTC → lun-vie 00:00 CEST (verano)
+    - cron: '0 23 * * 0-4'  # dom-jue 23:00 UTC → lun-vie 00:00 CET  (invierno)
+
+    # 09:00 hora España (lun-vie)
+    - cron: '0 7 * * 1-5'   # 07:00 UTC → 09:00 CEST (verano)
+    - cron: '0 8 * * 1-5'   # 08:00 UTC → 09:00 CET  (invierno)
+
+    # 16:00 hora España (lun-vie)
+    - cron: '0 14 * * 1-5'  # 14:00 UTC → 16:00 CEST (verano)
+    - cron: '0 15 * * 1-5'  # 15:00 UTC → 16:00 CET  (invierno)
+
+  workflow_dispatch:        # Permite ejecutarlo manualmente desde GitHub
 
 jobs:
   check-citas:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Verificar hora España (filtro anti-duplicados)
+        id: check_time
+        run: |
+          HORA=$(TZ=Europe/Madrid date +%H)
+          DIA=$(TZ=Europe/Madrid date +%u)   # 1=lun … 7=dom
+          echo "Hora España: ${HORA}:00  |  Día semana: ${DIA} (1=lun, 5=vie)"
+
+          if [[ "$DIA" -le 5 && "$HORA" =~ ^(00|09|16)$ ]]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Hora programada (${HORA}:00), ejecutando"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "⏭️ Hora no programada (${HORA}:00) o fin de semana, saltando"
+          fi
+
       - name: Checkout repositorio
+        if: steps.check_time.outputs.should_run == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
 
       - name: Configurar Python
+        if: steps.check_time.outputs.should_run == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Instalar dependencias Python
+        if: steps.check_time.outputs.should_run == 'true' || github.event_name == 'workflow_dispatch'
         run: pip install selenium requests
 
       - name: Instalar Chrome
+        if: steps.check_time.outputs.should_run == 'true' || github.event_name == 'workflow_dispatch'
         uses: browser-actions/setup-chrome@v1
 
       - name: Ejecutar verificador de citas
+        if: steps.check_time.outputs.should_run == 'true' || github.event_name == 'workflow_dispatch'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

@@ -177,6 +177,7 @@ def check_availability():
                 f"🏛️ REGISTRO CIVIL EXCLUSIVO DE MÁLAGA\n"
                 f"📋 Trámite: NACIONALIDAD\n\n"
                 f"❌ No hay citas disponibles en este momento.\n\n"
+                f"🔗 <a href=\"{URL_CITAS}\">Link Cita</a>\n\n"
                 f"🔂 Próxima ejecución programada para las {proxima_str}"
             )
             send_telegram_notification(message, screenshot_path)
